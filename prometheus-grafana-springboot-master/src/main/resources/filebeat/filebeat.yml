@@ -1,0 +1,27 @@
+filebeat.inputs:
+  - type: filestream
+    id: springboot-app-logs
+    enabled: true
+    paths:
+      - /app/logs/*.log
+    parsers:
+      - ndjson:
+          target: ""
+          overwrite_keys: true
+          add_error_key: true
+    fields:
+      log_source: springboot-app
+    fields_under_root: true
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+  index: "springboot-logs-%{+yyyy.MM.dd}"
+
+setup.kibana:
+  host: "http://kibana:5601"
+
+setup.ilm.enabled: false
+setup.template.name: "springboot-logs"
+setup.template.pattern: "springboot-logs-*"
+
+logging.level: info

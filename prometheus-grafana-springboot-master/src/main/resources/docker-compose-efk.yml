@@ -1,0 +1,206 @@
+## docker-compose-efk.yml
+#version: '3.8'
+#
+#services:
+#  # ============================================
+#  # Elasticsearch - Storage for logs
+#  # ============================================
+#  elasticsearch:
+#    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+#    container_name: elasticsearch
+#    environment:
+#      - discovery.type=single-node
+#      - xpack.security.enabled=false
+#      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+#    ports:
+#      - "9200:9200"   # HTTP API
+#      - "9300:9300"   # Transport protocol
+#    volumes:
+#      - elasticsearch-data:/usr/share/elasticsearch/data
+#    networks:
+#      - efk-network
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#
+#  # ============================================
+#  # Kibana - Visualization for logs
+#  # ============================================
+#  kibana:
+#    image: docker.elastic.co/kibana/kibana:8.11.0
+#    container_name: kibana
+#    environment:
+#      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+#    ports:
+#      - "5601:5601"
+#    depends_on:
+#      elasticsearch:
+#        condition: service_healthy
+#    networks:
+#      - efk-network
+#
+#  # ============================================
+#  # Filebeat - Log collector (lightweight)
+#  # ============================================
+##  filebeat:
+##    image: docker.elastic.co/beats/filebeat:8.11.0
+##    container_name: filebeat
+##    user: root
+##    volumes:
+##      # Mount Filebeat configuration
+##      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+##      # Mount Docker socket to access container logs
+##      - /var/run/docker.sock:/var/run/docker.sock:ro
+##      # Mount Docker container log directory
+##      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+##      # Mount Spring Boot app logs (if writing to file)
+##      - ./logs:/app/logs:ro
+##    depends_on:
+##      elasticsearch:
+##        condition: service_healthy
+##    networks:
+##      - efk-network
+#
+#  filebeat:
+#    image: docker.elastic.co/beats/filebeat:8.11.0
+#    container_name: filebeat
+#    user: root
+#    volumes:
+#      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+#      - ./logs:/app/logs:ro
+#    depends_on:
+#      elasticsearch:
+#        condition: service_healthy
+#    networks:
+#      - efk-network
+#
+#networks:
+#  efk-network:
+#    driver: bridge
+#
+#volumes:
+#  elasticsearch-data:
+#    driver: local
+
+
+
+## docker-compose-efk.yml - UPDATED VERSION
+#services:
+#  elasticsearch:
+#    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+#    container_name: elasticsearch
+#    environment:
+#      - discovery.type=single-node
+#      - xpack.security.enabled=false
+#      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+#    ports:
+#      - "9200:9200"
+#    volumes:
+#      - elasticsearch-data:/usr/share/elasticsearch/data
+#    networks:
+#      - efk-network
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#
+#  kibana:
+#    image: docker.elastic.co/kibana/kibana:8.11.0
+#    container_name: kibana
+#    environment:
+#      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+#    ports:
+#      - "5601:5601"
+#    networks:
+#      - efk-network
+#    depends_on:
+#      elasticsearch:
+#        condition: service_healthy
+#
+#  filebeat:
+#    image: docker.elastic.co/beats/filebeat:8.11.0
+#    container_name: filebeat
+#    user: root
+#    command: [ "filebeat", "-e", "--strict.perms=false" ]
+#    volumes:
+#       - ./src/main/resources/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+#       - ./logs:/app/logs:ro
+##      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+##      - /var/run/docker.sock:/var/run/docker.sock:ro
+##      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+##      - C:/Users/SANIKA/Downloads/prometheus-grafana-springboot/prometheus-grafana-springboot/logs:/app/logs:ro
+#    networks:
+#      - efk-network
+#    depends_on:
+#      elasticsearch:
+#        condition: service_healthy
+#
+#networks:
+#  efk-network:
+#    driver: bridge
+#
+#volumes:
+#  elasticsearch-data:
+#    driver: local
+
+
+
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - efk-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - efk-network
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.11.0
+    container_name: filebeat
+    user: root
+    command: ["-e", "--strict.perms=false"]
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ../../../logs:/app/logs:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - efk-network
+
+networks:
+  efk-network:
+    driver: bridge
+
+volumes:
+  elasticsearch-data:
+    driver: local

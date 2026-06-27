@@ -1,0 +1,38 @@
+#global:
+#  scrape_interval: 15s
+#
+#scrape_configs:
+#  - job_name: "spring-boot-local"
+#    metrics_path: "/actuator/prometheus"
+#    static_configs:
+#      - targets: ["host.docker.internal:8082"]
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Your existing Spring Boot application
+  - job_name: "spring-boot-local"
+    metrics_path: "/actuator/prometheus"
+    static_configs:
+      - targets: ["host.docker.internal:8082"]
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # Node Exporter metrics from Kind cluster nodes
+  - job_name: "kind-node-exporter"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets:
+          - "host.docker.internal:39100"
+          - "host.docker.internal:39101"
+          - "host.docker.internal:39102"
+    scrape_interval: 30s
+
+  # kube-state-metrics (Kubernetes object metrics)
+  - job_name: "kind-kube-state-metrics"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["host.docker.internal:32080"]
+    scrape_interval: 30s
